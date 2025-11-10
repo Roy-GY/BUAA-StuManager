@@ -2,12 +2,9 @@
 
 ## 概述
 
-BUAA-StuManager 是一个用于管理学生信息的 Web 应用程序。它允许用户查看、添加、编辑和删除学生记录。该应用程序还支持分页和按 ID
-查询用户。
+BUAA-StuManager 是一个用于管理学生信息的 Web 应用程序。它允许用户查看、添加、编辑和删除学生记录。该应用程序还支持分页和按 ID 查询用户。
 
 本项目是buaa北航2学分一般专业课《互联网软件新技术（XML和Web）》（1-9周，考核方式：随堂开卷考试+8页综述论文+小程序）的课程作业，要求为使用XML+WebService技术写一个小程序。
-
-GitHub项目地址：https://github.com/oopb/BUAA-StuManager/tree/master
 
 ## 功能
 
@@ -36,7 +33,7 @@ GitHub项目地址：https://github.com/oopb/BUAA-StuManager/tree/master
 
 1. 克隆仓库：
     ```sh
-    git clone https://github.com/oopb/BUAA-StuManager.git
+    git clone https://github.com/Roy-GY/BUAA-StuManager.git
     cd BUAA-StuManager
     ```
 
@@ -119,4 +116,4 @@ GitHub项目地址：https://github.com/oopb/BUAA-StuManager/tree/master
 
 ## 作者
 
-- 22230610 曹晨旭
+- 23230618 吴承儒
