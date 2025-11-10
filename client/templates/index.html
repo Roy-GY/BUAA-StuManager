@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUAA Student Score Manager</title>
+    <link rel="stylesheet" href="/static/index_style.css">
+</head>
+<body onload="getUserList()">
+<header>
+    <h1>BUAA Student Score Manager</h1>
+</header>
+<main>
+    <button onclick="getStudentList()">Get Student List</button>
+    <button onclick="window.location.href='/add_student_page'">Add Student</button>
+
+    <!-- Form to query student by ID -->
+    <form id="query-student-form" onsubmit="queryStudentById(event)">
+        <label for="student-id">Student ID:</label>
+        <input type="number" id="student-id" name="student-id">
+        <button type="submit">Query Student</button>
+    </form>
+
+    <!-- Ranking and Average Score Controls -->
+    <div id="ranking-controls">
+        <h3>Rankings & Statistics</h3>
+        <button onclick="getRankedStudents('chinese_score')">Chinese Score Ranking</button>
+        <button onclick="getRankedStudents('math_score')">Math Score Ranking</button>
+        <button onclick="getRankedStudents('english_score')">English Score Ranking</button>
+        <button onclick="getAverageScore('chinese_score')">Chinese Average</button>
+        <button onclick="getAverageScore('math_score')">Math Average</button>
+        <button onclick="getAverageScore('english_score')">English Average</button>
+    </div>
+
+    <!-- Form to edit student information -->
+    <form id="edit-student-form" onsubmit="editStudent(event)" style="display:none;">
+        <h2>Edit Student</h2>
+        <input type="hidden" id="edit-student-index">
+        <label for="edit-student-id">Student ID:</label>
+        <input type="number" id="edit-student-id" name="edit-student-id" readonly>
+        <label for="edit-student-name">Student Name:</label>
+        <input type="text" id="edit-student-name" name="edit-student-name" required>
+        <label for="edit-chinese-score">Chinese Score:</label>
+        <input type="number" id="edit-chinese-score" name="edit-chinese-score" required>
+        <label for="edit-math-score">Math Score:</label>
+        <input type="number" id="edit-math-score" name="edit-math-score" required>
+        <label for="edit-english-score">English Score:</label>
+        <input type="number" id="edit-english-score" name="edit-english-score" required>
+        <button type="submit">Save Changes</button>
+        <button type="button" onclick="cancelEdit()">Cancel</button>
+    </form>
+
+    <table id="student-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Student Name</th>
+            <th>Chinese Score</th>
+            <th>Math Score</th>
+            <th>English Score</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Student data will be inserted here -->
+        </tbody>
+    </table>
+
+    <div id="pagination-controls">
+        <button id="prev-page-btn">Previous</button>
+        <span id="current-page">Page 1</span>
+        <button id="next-page-btn">Next</button>
+    </div>
+</main>
+<footer>
+    Author: 23230618 吴承儒
+</footer>
+
+<script>
+    let currentPage = 0;
+    const pageSize = 10;
+
+    document.getElementById('prev-page-btn').addEventListener('click', function () {
+        getStudentList(false, currentPage > 0 ? currentPage - 1 : 0);
+    });
+
+    document.getElementById('next-page-btn').addEventListener('click', function () {
+        getStudentList(true, currentPage + 1);
+    });
+
+    function getStudentList(isNextPage = false, new_page = 0) {
+        fetch(`/get_student_list?page_size=${pageSize}&current_page=${new_page}`)
+            .then(response => response.json())
+            .then(data => {
+                const studentTableBody = document.getElementById('student-table').getElementsByTagName('tbody')[0];
+
+                if (data.error) {
+                    const row = studentTableBody.insertRow();
+                    const cell = row.insertCell(0);
+                    cell.colSpan = 6;
+                    cell.innerHTML = `<p>${data.error}</p>`;
+                } else {
+                    const students = JSON.parse(data);
+                    if (students.length > 0) {
+                        studentTableBody.innerHTML = ''; // Clear previous content
+                        students.forEach((student, index) => {
+                            const row = studentTableBody.insertRow();
+                            row.insertCell(0).innerText = student.id;
+                            row.insertCell(1).innerText = student.student_name;
+                            row.insertCell(2).innerText = student.chinese_score;
+                            row.insertCell(3).innerText = student.math_score;
+                            row.insertCell(4).innerText = student.english_score;
+                            const actionsCell = row.insertCell(5);
+                            actionsCell.innerHTML = `
+                                <button onclick="deleteStudent(${student.id})">Delete</button>
+                                <button onclick="showEditForm(${student.id}, '${student.student_name}', ${student.chinese_score}, ${student.math_score}, ${student.english_score})">Edit</button>
+                            `;
+                        });
+                        currentPage = new_page;
+                    }
+                }
+                document.getElementById('current-page').textContent = `Page ${currentPage + 1}`;
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            });
+    }
+
+    function queryStudentById(event) {
+        event.preventDefault();
+        const studentId = document.getElementById('student-id').value;
+        fetch(`/query_student?id=${studentId}`)
+            .then(response => response.json())
+            .then(data => {
+                const studentTableBody = document.getElementById('student-table').getElementsByTagName('tbody')[0];
+                studentTableBody.innerHTML = ''; // Clear previous content
+
+                if (data.error) {
+                    const row = studentTableBody.insertRow();
+                    const cell = row.insertCell(0);
+                    cell.colSpan = 6;
+                    cell.innerHTML = `<p>${data.error}</p>`;
+                } else {
+                    const student = JSON.parse(data);
+                    const row = studentTableBody.insertRow();
+                    row.insertCell(0).innerText = student.id;
+                    row.insertCell(1).innerText = student.student_name;
+                    row.insertCell(2).innerText = student.chinese_score;
+                    row.insertCell(3).innerText = student.math_score;
+                    row.insertCell(4).innerText = student.english_score;
+                    const actionsCell = row.insertCell(5);
+                    actionsCell.innerHTML = `<button onclick="deleteStudent(${student.id})">Delete</button>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            });
+    }
+
+    function showEditForm(id, studentName, chineseScore, mathScore, englishScore) {
+        document.getElementById('edit-student-form').style.display = 'block';
+        document.getElementById('edit-student-id').value = id;
+        document.getElementById('edit-student-name').value = studentName;
+        document.getElementById('edit-chinese-score').value = chineseScore;
+        document.getElementById('edit-math-score').value = mathScore;
+        document.getElementById('edit-english-score').value = englishScore;
+    }
+
+    function editStudent(event) {
+        event.preventDefault();
+        const id = document.getElementById('edit-student-id').value;
+        const studentName = document.getElementById('edit-student-name').value;
+        const chineseScore = document.getElementById('edit-chinese-score').value;
+        const mathScore = document.getElementById('edit-math-score').value;
+        const englishScore = document.getElementById('edit-english-score').value;
+
+        fetch(`/edit_student?id=${id}&student_name=${studentName}&chinese_score=${chineseScore}&math_score=${mathScore}&english_score=${englishScore}`, {method: 'PUT'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    getStudentList(); // Refresh the student list
+                    document.getElementById('edit-student-form').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            });
+    }
+
+    function cancelEdit() {
+        document.getElementById('edit-student-form').style.display = 'none';
+    }
+
+    function deleteStudent(id) {
+        fetch(`/delete_student?id=${id}`, {method: 'DELETE'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    getStudentList(); // Refresh the student list
+                }
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            });
+    }
+
+    function getRankedStudents(subject) {
+        fetch(`/get_ranked_students?subject=${subject}&page_size=${pageSize}&current_page=0`)
+            .then(response => response.json())
+            .then(data => {
+                const studentTableBody = document.getElementById('student-table').getElementsByTagName('tbody')[0];
+                studentTableBody.innerHTML = ''; // Clear previous content
+
+                if (data.error) {
+                    const row = studentTableBody.insertRow();
+                    const cell = row.insertCell(0);
+                    cell.colSpan = 6;
+                    cell.innerHTML = `<p>${data.error}</p>`;
+                } else {
+                    const students = JSON.parse(data);
+                    if (students.length > 0) {
+                        students.forEach((student, index) => {
+                            const row = studentTableBody.insertRow();
+                            row.insertCell(0).innerText = student.id;
+                            row.insertCell(1).innerText = student.student_name;
+                            row.insertCell(2).innerText = student.chinese_score;
+                            row.insertCell(3).innerText = student.math_score;
+                            row.insertCell(4).innerText = student.english_score;
+                            const actionsCell = row.insertCell(5);
+                            actionsCell.innerHTML = `
+                                <button onclick="deleteStudent(${student.id})">Delete</button>
+                                <button onclick="showEditForm(${student.id}, '${student.student_name}', ${student.chinese_score}, ${student.math_score}, ${student.english_score})">Edit</button>
+                            `;
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            });
+    }
+
+    function getAverageScore(subject) {
+        fetch(`/get_average_score?subject=${subject}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    const result = JSON.parse(data);
+                    alert(`${result.subject.replace('_score', '').toUpperCase()} Average Score: ${result.average_score}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            });
+    }
+    document.getElementById('edit-student-form').addEventListener('submit', editStudent);
+</script>
+</body>
+</html>

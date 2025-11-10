@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Student</title>
+    <link rel="stylesheet" href="/static/add_user_style.css">
+</head>
+<body>
+<h1>Student Score Management</h1>
+<button id="open-modal-btn">Add Student</button>
+
+<div id="add-user-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Add Student</h2>
+        <form id="add-user-form">
+            <label for="id">ID:</label>
+            <input type="number" id="id" name="id" required>
+            <br>
+            <label for="student_name">Student Name:</label>
+            <input type="text" id="student_name" name="student_name" required>
+            <br>
+            <label for="chinese_score">Chinese Score:</label>
+            <input type="number" id="chinese_score" name="chinese_score" required>
+            <br>
+            <label for="math_score">Math Score:</label>
+            <input type="number" id="math_score" name="math_score" required>
+            <br>
+            <label for="english_score">English Score:</label>
+            <input type="number" id="english_score" name="english_score" required>
+            <br>
+            <button type="submit">Add Student</button>
+            <button type="button" onclick="window.location.href='/'">Cancel</button>
+        </form>
+        <div id="add-user-result"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('open-modal-btn').addEventListener('click', function () {
+        document.getElementById('add-user-modal').style.display = 'block';
+    });
+
+    document.querySelector('.close-btn').addEventListener('click', function () {
+        document.getElementById('add-user-modal').style.display = 'none';
+    });
+
+    window.addEventListener('click', function (event) {
+        if (event.target == document.getElementById('add-user-modal')) {
+            document.getElementById('add-user-modal').style.display = 'none';
+        }
+    });
+
+    document.getElementById('add-user-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const id = document.getElementById('id').value;
+        const studentName = document.getElementById('student_name').value;
+        const chineseScore = document.getElementById('chinese_score').value;
+        const mathScore = document.getElementById('math_score').value;
+        const englishScore = document.getElementById('english_score').value;
+
+        fetch('/add_student', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({id: id, student_name: studentName, chinese_score: chineseScore, math_score: mathScore, english_score: englishScore})
+        })
+            .then(response => response.json())
+            .then(data => {
+                const addUserResultDiv = document.getElementById('add-user-result');
+                if (data.error) {
+                    addUserResultDiv.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                } else {
+                    addUserResultDiv.innerHTML = `<p style="color: green;">Student added successfully!</p>`;
+                    window.location.href = '/';
+                }
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            });
+    });
+</script>
+</body>
+</html>
