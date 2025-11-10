@@ -4,7 +4,7 @@ from spyne import Integer, Unicode
 from spyne import ServiceBase, rpc
 
 # Database setup
-conn = sqlite3.connect('users.db')
+conn = sqlite3.connect('students.db')
 cursor = conn.cursor()
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS students (
